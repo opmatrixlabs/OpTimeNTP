@@ -1,0 +1,52 @@
+### CLion+iml template
+# Covers JetBrains IDEs: IntelliJ, PyCharm, CLion, GoLand
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff
+.idea/
+.vs/
+deploy/
+AGENTS.md
+.codex/
+
+# CMake
+cmake-build-*/
+build/
+deploy/
+dist/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.orig
+.DS_Store
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# plugins
+.idea_modules/
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+### Git template
+# Created by git for backups. To disable backups in Git:
+# $ git config --global mergetool.keepBackup false
+.git/
+*.orig
+
+# Created by git when using merge tools for conflicts
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*_BACKUP_*.txt
+*_BASE_*.txt
+*_LOCAL_*.txt
+*_REMOTE_*.txt
+
