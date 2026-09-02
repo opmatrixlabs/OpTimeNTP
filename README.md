@@ -11,11 +11,15 @@ prototype. It retains the prototype's dark instrument-panel presentation,
 server detail cards, comparison tables, polling controls, timing metrics, and
 status summary while replacing all mock data with asynchronous UDP queries.
 
+| Server Detail Cards | Comparison Table |
+| :---: | :---: |
+| ![OpTime NTP Server Cards view](images/server_cards.png) | ![OpTime NTP Comparison Table view](images/comparison_table.png) |
+
 ## Supported Targets
 
 - Windows 11 x64 with Visual Studio 2026 and the v145 MSVC toolset
   (primary development and test target)
-- Linux x64 with GCC
+- Linux x64 and ARM64 with GCC
 - macOS ARM64 with Apple Clang
 
 The CMake project requires CMake 3.25 or newer and declares policy
