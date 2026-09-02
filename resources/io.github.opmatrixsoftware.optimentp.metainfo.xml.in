@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.opmatrixsoftware.optimentp.desktop</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.opmatrixsoftware">
+    <name>OpMatrix Inc.</name>
+  </developer>
+  <name>OpTime NTP</name>
+  <summary>Compare the local clock with multiple NTP servers</summary>
+  <description>
+    <p>OpTime NTP queries multiple NTP servers and compares their synchronized time with the local computer clock.</p>
+  </description>
+  <launchable type="desktop-id">io.github.opmatrixsoftware.optimentp.desktop</launchable>
+  <url type="homepage">https://github.com/opmatrixsoftware</url>
+  <provides>
+    <binary>OpTimeNTP</binary>
+  </provides>
+  <categories>
+    <category>Network</category>
+    <category>Utility</category>
+  </categories>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="@OPTIME_BUILD_DATE@" />
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

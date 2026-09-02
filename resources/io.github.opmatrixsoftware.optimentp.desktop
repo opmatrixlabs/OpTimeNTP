@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=OpTime NTP
+Comment=Compare the local clock with multiple NTP servers
+Exec=OpTimeNTP
+Icon=io.github.opmatrixsoftware.optimentp
+Terminal=false
+Categories=Network;
