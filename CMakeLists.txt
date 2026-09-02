@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25...4.3)
+cmake_minimum_required(VERSION 3.30...4.3)
 
 project(OpTimeNTP
         VERSION 0.1.0
@@ -18,7 +18,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-option(OPTIME_DEPLOY_QT_RUNTIME "Deploy the Qt runtime beside the application after building" ON)
+option(OPTIME_DEPLOY_QT_RUNTIME "Deploy the Qt runtime with the application" ON)
 
 if(WIN32)
     message(STATUS "Configuring OpTimeNTP for Windows x64")
@@ -39,29 +39,40 @@ if(WIN32)
         set(CMAKE_PREFIX_PATH "C:/Development/Qt/6.10.3/msvc2022_64")
     endif()
 elseif(APPLE)
+    if(CMAKE_OSX_ARCHITECTURES)
+        set(OPTIME_MACOS_TARGET_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}")
+    else()
+        set(OPTIME_MACOS_TARGET_ARCHITECTURES "${CMAKE_SYSTEM_PROCESSOR}")
+    endif()
+    if(NOT OPTIME_MACOS_TARGET_ARCHITECTURES MATCHES "(^|;)arm64($|;)")
+        message(FATAL_ERROR
+                "OpTimeNTP supports macOS ARM64 only; detected target architectures: ${OPTIME_MACOS_TARGET_ARCHITECTURES}")
+    endif()
     message(STATUS "Configuring OpTimeNTP for macOS ARM64")
-    if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
-        set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "macOS target architectures")
-    endif()
-    if(NOT CMAKE_OSX_ARCHITECTURES MATCHES "(^|;)arm64($|;)")
-        message(FATAL_ERROR "OpTimeNTP supports macOS ARM64 only.")
-    endif()
     if(NOT DEFINED CMAKE_PREFIX_PATH)
         set(CMAKE_PREFIX_PATH "/Library/Qt/6.10.3/macos")
     endif()
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(STATUS "Configuring OpTimeNTP for Linux x64")
-    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-        message(FATAL_ERROR "OpTimeNTP supports Linux x64 only.")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+        message(STATUS "Configuring OpTimeNTP for Linux x64")
+        set(OPTIME_DEFAULT_QT_PREFIX "/home/akbailey/Qt/6.10.3/gcc_64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+        message(STATUS "Configuring OpTimeNTP for Linux ARM64")
+        set(OPTIME_DEFAULT_QT_PREFIX "/home/akbailey/Qt/6.10.3/gcc_arm64")
+    else()
+        message(FATAL_ERROR
+                "OpTimeNTP supports Linux x64 and ARM64; detected processor: ${CMAKE_SYSTEM_PROCESSOR}")
     endif()
     if(NOT DEFINED CMAKE_PREFIX_PATH)
-        set(CMAKE_PREFIX_PATH "/home/akbailey/Qt/6.10.3/gcc_64")
+        set(CMAKE_PREFIX_PATH "${OPTIME_DEFAULT_QT_PREFIX}")
     endif()
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 
 find_package(Qt6 6.10.3 EXACT REQUIRED COMPONENTS Core Gui Widgets Network)
+set(FETCHCONTENT_BASE_DIR "${CMAKE_BINARY_DIR}/_deps" CACHE PATH
+        "Directory used for dependencies populated by FetchContent" FORCE)
 include(FetchContent)
 include(GNUInstallDirs)
 
@@ -154,17 +165,32 @@ else()
 endif()
 
 if(APPLE)
+    set(OPTIME_MACOS_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/optime_ntp.icns")
+    set(OPTIME_MACOS_BUNDLE_DOCUMENTS
+            "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt"
+            "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md")
+    set_source_files_properties(
+            ${OPTIME_MACOS_ICON}
+            ${OPTIME_MACOS_BUNDLE_DOCUMENTS}
+            PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(${PROJECT_NAME} PRIVATE
+            ${OPTIME_MACOS_ICON}
+            ${OPTIME_MACOS_BUNDLE_DOCUMENTS})
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_BUNDLE_NAME "${OPTIME_DISPLAY_NAME}"
             MACOSX_BUNDLE_GUI_IDENTIFIER "${OPTIME_APP_ID}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
             MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_ICON_FILE "optime_ntp.icns"
     )
 endif()
 
 if(WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
+    target_sources(${PROJECT_NAME} PRIVATE resources/OpTimeNTP.rc)
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
@@ -199,23 +225,37 @@ endif()
 install(TARGETS ${PROJECT_NAME}
         BUNDLE DESTINATION .
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES LICENSE.txt THIRD_PARTY_NOTICES.md DESTINATION .)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    install(FILES resources/io.github.akevinbailey.optimentp.desktop
+    string(TIMESTAMP OPTIME_BUILD_DATE "%Y-%m-%d")
+    configure_file(
+            resources/io.github.opmatrixsoftware.optimentp.metainfo.xml.in
+            "${CMAKE_CURRENT_BINARY_DIR}/${OPTIME_APP_ID}.metainfo.xml"
+            @ONLY)
+
+    install(FILES resources/io.github.opmatrixsoftware.optimentp.desktop
             DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
     install(FILES resources/optime_ntp.svg
             DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
-            RENAME io.github.akevinbailey.optimentp.svg)
+            RENAME ${OPTIME_APP_ID}.svg)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${OPTIME_APP_ID}.metainfo.xml"
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+            RENAME ${OPTIME_APP_ID}.appdata.xml)
+    install(FILES LICENSE.txt THIRD_PARTY_NOTICES.md
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${PROJECT_NAME})
+elseif(NOT APPLE)
+    install(FILES LICENSE.txt THIRD_PARTY_NOTICES.md DESTINATION .)
 endif()
 
-qt_generate_deploy_app_script(
-        TARGET ${PROJECT_NAME}
-        OUTPUT_SCRIPT OPTIME_DEPLOY_SCRIPT
-        NO_TRANSLATIONS
-        NO_UNSUPPORTED_PLATFORM_ERROR
-)
-install(SCRIPT ${OPTIME_DEPLOY_SCRIPT})
+if(OPTIME_DEPLOY_QT_RUNTIME)
+    qt_generate_deploy_app_script(
+            TARGET ${PROJECT_NAME}
+            OUTPUT_SCRIPT OPTIME_DEPLOY_SCRIPT
+            NO_TRANSLATIONS
+            NO_UNSUPPORTED_PLATFORM_ERROR
+    )
+    install(SCRIPT ${OPTIME_DEPLOY_SCRIPT})
+endif()
 
 include(CTest)
 if(BUILD_TESTING)

@@ -23,6 +23,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QCloseEvent>
+#include <QColor>
 #include <QComboBox>
 #include <QDateTime>
 #include <QDialog>
@@ -31,12 +32,14 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFontDatabase>
+#include <QFontInfo>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPalette>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSaveFile>
@@ -46,6 +49,7 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStyle>
+#include <QTabBar>
 #include <QTabWidget>
 #include <QTableWidget>
 #include <QToolButton>
@@ -106,7 +110,8 @@ QLabel *legend(QWidget *parent, const QString &text, const QString &color) {
   return label;
 }
 
-QTableWidget *comparisonTable(QWidget *parent, const QStringList &headers) {
+QTableWidget *comparisonTable(QWidget *parent, const QStringList &headers,
+                              const int lastColumnWidth) {
   auto *table = new QTableWidget(parent);
   table->setColumnCount(static_cast<int>(headers.size()));
   table->setHorizontalHeaderLabels(headers);
@@ -116,8 +121,12 @@ QTableWidget *comparisonTable(QWidget *parent, const QStringList &headers) {
   table->setShowGrid(false);
   table->setAlternatingRowColors(true);
   table->verticalHeader()->setVisible(false);
-  table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-  table->horizontalHeader()->setStretchLastSection(true);
+  auto *header = table->horizontalHeader();
+  header->setSectionResizeMode(QHeaderView::ResizeToContents);
+  header->setStretchLastSection(false);
+  const int lastColumn = table->columnCount() - 1;
+  header->setSectionResizeMode(lastColumn, QHeaderView::Fixed);
+  table->setColumnWidth(lastColumn, lastColumnWidth);
   table->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
   table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   return table;
@@ -127,6 +136,10 @@ QTableWidgetItem *tableItem(const QString &text, const QString &color = {}) {
   auto *item = new QTableWidgetItem(text);
   QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
   font.setPointSize(9);
+  const int resolvedPixelSize = QFontInfo(font).pixelSize();
+  if (resolvedPixelSize > 0) {
+    font.setPixelSize(resolvedPixelSize + 2);
+  }
   item->setFont(font);
   if (!color.isEmpty()) {
     item->setForeground(QColor(color));
@@ -518,7 +531,7 @@ void MainWindow::setupUi() {
 
   m_pollingButton = toolbarButton(
       topBar, QStringLiteral("Polling Active"),
-      style()->standardIcon(QStyle::SP_MediaPlay),
+      QIcon(QStringLiteral(":/icons/play.svg")),
       QStringLiteral("Start or stop automatic NTP queries"));
   m_pollingButton->setCheckable(true);
   topLayout->addWidget(m_pollingButton);
@@ -530,12 +543,13 @@ void MainWindow::setupUi() {
   topLayout->addWidget(m_queryButton);
 
   m_addButton = toolbarButton(
-      topBar, QStringLiteral("Add"), QIcon(QStringLiteral(":/icons/plus.svg")),
+      topBar, QStringLiteral("Add"),
+      QIcon(QStringLiteral(":/icons/plus.svg")),
       QStringLiteral("Add an NTP server"));
   topLayout->addWidget(m_addButton);
   m_editButton = toolbarButton(
       topBar, QStringLiteral("Edit"),
-      style()->standardIcon(QStyle::SP_FileDialogDetailedView),
+      QIcon(QStringLiteral(":/icons/edit.svg")),
       QStringLiteral("Edit the selected NTP server"));
   topLayout->addWidget(m_editButton);
   m_removeButton = toolbarButton(
@@ -570,9 +584,13 @@ void MainWindow::setupUi() {
   root->addWidget(topBar);
 
   m_tabs = new QTabWidget(central);
+  m_tabs->setObjectName(QStringLiteral("MainTabs"));
   m_tabs->setDocumentMode(true);
+  m_tabs->tabBar()->setDrawBase(false);
 
   m_cardScrollArea = new QScrollArea(m_tabs);
+  m_cardScrollArea->setObjectName(QStringLiteral("CardScrollArea"));
+  m_cardScrollArea->viewport()->setObjectName(QStringLiteral("CardViewport"));
   m_cardScrollArea->setWidgetResizable(true);
   m_cardScrollArea->setFrameShape(QFrame::NoFrame);
   m_cardHost = new QWidget(m_cardScrollArea);
@@ -586,9 +604,13 @@ void MainWindow::setupUi() {
   m_tabs->addTab(m_cardScrollArea, QStringLiteral("Server Detail Cards"));
 
   auto *comparisonScroll = new QScrollArea(m_tabs);
+  comparisonScroll->setObjectName(QStringLiteral("ComparisonScrollArea"));
+  comparisonScroll->viewport()->setObjectName(
+      QStringLiteral("ComparisonViewport"));
   comparisonScroll->setWidgetResizable(true);
   comparisonScroll->setFrameShape(QFrame::NoFrame);
   auto *comparisonHost = new QWidget(comparisonScroll);
+  comparisonHost->setObjectName(QStringLiteral("ComparisonHost"));
   auto *comparisonLayout = new QVBoxLayout(comparisonHost);
   comparisonLayout->setContentsMargins(14, 14, 14, 14);
   comparisonLayout->setSpacing(10);
@@ -602,7 +624,8 @@ void MainWindow::setupUi() {
        QStringLiteral("Server time"), QStringLiteral("Offset"),
        QStringLiteral("Precise offset"), QStringLiteral("Delta vs ref"),
        QStringLiteral("RTT"), QStringLiteral("Jitter"),
-       QStringLiteral("Stratum"), QStringLiteral("Leap")});
+       QStringLiteral("Stratum"), QStringLiteral("Leap")},
+      100);
   comparisonLayout->addWidget(m_offsetTable);
 
   auto *detailTitle = new QLabel(QStringLiteral("PRECISION AND SYNCHRONIZATION DETAIL"),
@@ -614,7 +637,8 @@ void MainWindow::setupUi() {
       {QStringLiteral("Server"), QStringLiteral("Precision"),
        QStringLiteral("Root delay"), QStringLiteral("Root dispersion"),
        QStringLiteral("Server poll"), QStringLiteral("Reachability"),
-       QStringLiteral("Reference ID"), QStringLiteral("Frequency estimate")});
+       QStringLiteral("Reference ID"), QStringLiteral("Frequency estimate")},
+      200);
   comparisonLayout->addWidget(m_detailTable);
 
   auto *leapTitle = new QLabel(QStringLiteral("LEAP SECOND INDICATORS (RFC 5905)"),
@@ -624,7 +648,8 @@ void MainWindow::setupUi() {
   m_leapTable = comparisonTable(
       comparisonHost,
       {QStringLiteral("Server"), QStringLiteral("LI bits"),
-       QStringLiteral("Meaning"), QStringLiteral("Last successful query")});
+       QStringLiteral("Meaning"), QStringLiteral("Last successful query")},
+      320);
   comparisonLayout->addWidget(m_leapTable);
   comparisonLayout->addStretch();
   comparisonScroll->setWidget(comparisonHost);
@@ -727,7 +752,8 @@ void MainWindow::setupMenus() {
         this, QStringLiteral("About OpTime NTP"),
         QStringLiteral("<b>OpTime NTP %1</b><br><br>"
                        "Compares the local computer clock with up to ten NTPv4 "
-                       "servers using the four-timestamp offset calculation.<br><br>"
+                       "servers using the four-timestamp offset calculation.<br>"
+                       "<br>Copyright (C) 2026 Andrew Kevin Bailey<br><br>"
                        "Built with C++20 and Qt 6.10.3. Application source is MIT "
                        "licensed. NTP client design incorporates ideas from the "
                        "MIT-licensed elrinor/qntp project. YAML support uses the "
@@ -743,12 +769,35 @@ void MainWindow::applyStyle() {
     return;
   }
 
+  QPalette darkPalette = QApplication::palette();
+  darkPalette.setColor(QPalette::Window, QColor(QStringLiteral("#070b0f")));
+  darkPalette.setColor(QPalette::WindowText,
+                       QColor(QStringLiteral("#c8d3e0")));
+  darkPalette.setColor(QPalette::Base, QColor(QStringLiteral("#0d1117")));
+  darkPalette.setColor(QPalette::AlternateBase,
+                       QColor(QStringLiteral("#0a0f15")));
+  darkPalette.setColor(QPalette::Text, QColor(QStringLiteral("#c8d3e0")));
+  darkPalette.setColor(QPalette::Button, QColor(QStringLiteral("#111827")));
+  darkPalette.setColor(QPalette::ButtonText,
+                       QColor(QStringLiteral("#c8d3e0")));
+  darkPalette.setColor(QPalette::ToolTipBase,
+                       QColor(QStringLiteral("#374151")));
+  darkPalette.setColor(QPalette::ToolTipText,
+                       QColor(QStringLiteral("#e2e8f0")));
+  darkPalette.setColor(QPalette::Highlight,
+                       QColor(QStringLiteral("#0d2846")));
+  darkPalette.setColor(QPalette::HighlightedText,
+                       QColor(QStringLiteral("#e2e8f0")));
+  QApplication::setPalette(darkPalette);
+
   application->setStyleSheet(QStringLiteral(R"QSS(
     * {
       font-family: "Segoe UI", "Inter", sans-serif;
       color: #c8d3e0;
     }
-    QMainWindow, #ApplicationRoot, #CardHost {
+    QMainWindow, #ApplicationRoot, #MainTabs,
+    #CardScrollArea, #CardViewport, #CardHost,
+    #ComparisonScrollArea, #ComparisonViewport, #ComparisonHost {
       background: #070b0f;
     }
     QMenuBar, QMenu {
@@ -760,6 +809,12 @@ void MainWindow::applyStyle() {
       background: #111827;
       color: #e2e8f0;
     }
+    QToolTip {
+      background: #374151;
+      color: #e2e8f0;
+      border: 1px solid #4b5563;
+      padding: 4px 6px;
+    }
     #TopBar {
       background: #0a0d12;
       border-bottom: 1px solid #161b22;
@@ -767,7 +822,7 @@ void MainWindow::applyStyle() {
     #ToolbarLabel {
       color: #526075;
       font-family: "Consolas", "JetBrains Mono", monospace;
-      font-size: 9px;
+      font-size: 12px;
     }
     #Legend {
       font-family: "Consolas", "JetBrains Mono", monospace;
@@ -790,6 +845,7 @@ void MainWindow::applyStyle() {
       border-radius: 4px;
       padding: 5px 9px;
       color: #94a3b8;
+      font-size: 12px;
     }
     QToolButton:hover, QPushButton:hover, QComboBox:hover {
       border-color: #3b82f6;
@@ -800,7 +856,7 @@ void MainWindow::applyStyle() {
       border-color: #1e3a5f;
       color: #60a5fa;
     }
-    QTabWidget::pane { border: none; }
+    QTabWidget::pane { background: #070b0f; border: none; }
     QTabBar { background: #0a0d12; }
     QTabBar::tab {
       background: #0a0d12;
@@ -808,7 +864,7 @@ void MainWindow::applyStyle() {
       border-bottom: 2px solid transparent;
       color: #526075;
       padding: 9px 17px;
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 600;
     }
     QTabBar::tab:selected {
@@ -828,24 +884,24 @@ void MainWindow::applyStyle() {
       color: #60a5fa;
       font-family: "Consolas", "JetBrains Mono", monospace;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 14px;
     }
-    #ServerName { color: #e2e8f0; font-size: 16px; font-weight: 600; }
+    #ServerName { color: #e2e8f0; font-size: 18px; font-weight: 600; }
     #ServerHost, #MetricSub {
       color: #526075;
       font-family: "Consolas", "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-size: 13px;
     }
     #ServerStatus {
       font-family: "Consolas", "JetBrains Mono", monospace;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
     }
     #SetTimeButton {
       background: transparent;
       border: none;
       color: #60a5fa;
-      font-size: 11px;
+      font-size: 13px;
       padding: 4px 6px;
     }
     #SetTimeButton:hover { background: #0d1f35; color: #bfdbfe; }
@@ -854,20 +910,20 @@ void MainWindow::applyStyle() {
     #TimeBand { background: #080c11; border-radius: 3px; }
     #MetricCaption {
       color: #526075;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
     }
     #MetricValue, #TimeValue, #TimeValueAccent, #PreciseOffset, #OffsetValue {
       font-family: "Consolas", "JetBrains Mono", monospace;
     }
-    #MetricValue { color: #a8b4c5; font-size: 12px; }
-    #TimeValue { color: #94a3b8; font-size: 12px; }
-    #TimeValueAccent { color: #60a5fa; font-size: 12px; }
-    #OffsetValue { color: #06b6d4; font-size: 18px; font-weight: 600; }
-    #PreciseOffset { color: #64748b; font-size: 11px; }
+    #MetricValue { color: #a8b4c5; font-size: 14px; }
+    #TimeValue { color: #94a3b8; font-size: 14px; }
+    #TimeValueAccent { color: #60a5fa; font-size: 14px; }
+    #OffsetValue { color: #06b6d4; font-size: 20px; font-weight: 600; }
+    #PreciseOffset { color: #64748b; font-size: 13px; }
     #SectionTitle {
       color: #64748b;
-      font-size: 10px;
+      font-size: 14px;
       font-weight: 700;
     }
     QTableWidget {
@@ -884,7 +940,7 @@ void MainWindow::applyStyle() {
       border: none;
       border-bottom: 1px solid #1b2430;
       padding: 6px 9px;
-      font-size: 8px;
+      font-size: 14px;
       font-weight: 700;
     }
     QStatusBar {
@@ -993,8 +1049,9 @@ void MainWindow::applyPollingState(const bool queryImmediately) {
   m_pollingButton->setChecked(m_pollingActive);
   m_pollingButton->setText(m_pollingActive ? QStringLiteral("Polling Active")
                                            : QStringLiteral("Start Polling"));
-  m_pollingButton->setIcon(style()->standardIcon(
-      m_pollingActive ? QStyle::SP_MediaPlay : QStyle::SP_MediaPause));
+  m_pollingButton->setIcon(
+      m_pollingActive ? QIcon(QStringLiteral(":/icons/play.svg"))
+                      : QIcon(QStringLiteral(":/icons/pause.svg")));
   m_pollingButton->blockSignals(false);
 
   m_pollTimer.setInterval(m_pollIntervalMillis);

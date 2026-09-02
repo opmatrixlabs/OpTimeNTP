@@ -18,7 +18,6 @@
         "value": "v145,host=x64",
         "strategy": "set"
       },
-      "binaryDir": "${sourceDir}/cmake-build-${presetName}-vs2026",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -32,18 +31,20 @@
     {
       "name": "windows-debug",
       "displayName": "Windows 11 x64 Debug (Visual Studio 2026)",
-      "inherits": "windows-base"
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/cmake-build-debug-visualstudio-2026"
     },
     {
       "name": "windows-release",
       "displayName": "Windows 11 x64 Release (Visual Studio 2026)",
-      "inherits": "windows-base"
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/cmake-build-release-visualstudio-2026"
     },
     {
       "name": "linux-x64-release",
       "displayName": "Linux x64 Release",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/cmake-build-linux-x64-release",
+      "binaryDir": "${sourceDir}/cmake-build-release-wsl-linux-x86_64",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

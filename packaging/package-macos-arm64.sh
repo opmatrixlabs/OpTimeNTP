@@ -17,11 +17,14 @@ cmake -S "$repository_dir" -B "$build_dir" -G Ninja \
 cmake --build "$build_dir" --parallel
 ctest --test-dir "$build_dir" --output-on-failure
 
-stage_dir="$build_dir/package/OpTimeNTP"
-rm -rf -- "$stage_dir"
-cmake --install "$build_dir" --prefix "$stage_dir"
+package_dir="$build_dir/package"
+rm -rf -- "$package_dir"
+cmake --install "$build_dir" --prefix "$package_dir"
 
-archive_path="$build_dir/OpTimeNTP_macos_arm64.zip"
-rm -f -- "$archive_path"
-ditto -c -k --sequesterRsrc --keepParent "$stage_dir" "$archive_path"
-echo "Created $archive_path"
+app_path="$package_dir/OpTimeNTP.app"
+[[ -d "$app_path/Contents/MacOS" ]] || {
+  echo "Application bundle was not created: $app_path" >&2
+  exit 3
+}
+
+echo "Created $app_path"

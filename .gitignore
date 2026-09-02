@@ -39,6 +39,8 @@ fabric.properties
 # $ git config --global mergetool.keepBackup false
 .git/
 io.github.*
+!resources/io.github.*.desktop
+!resources/io.github.*.metainfo.xml.in
 
 # Created by git when using merge tools for conflicts
 *.BACKUP.*
@@ -49,4 +51,3 @@ io.github.*
 *_BASE_*.txt
 *_LOCAL_*.txt
 *_REMOTE_*.txt
-

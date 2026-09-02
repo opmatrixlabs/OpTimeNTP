@@ -59,13 +59,23 @@ class OffsetBar final : public QWidget {
     painter.setBrush(QColor(QStringLiteral("#161b22")));
     painter.drawRoundedRect(track, 1.0, 1.0);
 
+    constexpr double halfRangeMicros = 1'000'000.0;
     const double normalized =
-        std::clamp(m_offsetMicros / 100'000.0, -1.0, 1.0);
+        std::clamp(m_offsetMicros / halfRangeMicros, -1.0, 1.0);
     const double center = width() / 2.0;
     const double markerX = center + normalized * (width() / 2.0 - 3.0);
-    painter.setBrush(QColor(std::abs(m_offsetMicros) >= 10'000.0
-                                ? QStringLiteral("#f59e0b")
-                                : QStringLiteral("#06b6d4")));
+    const double absoluteOffsetMicros = std::abs(m_offsetMicros);
+    QString markerColor;
+    if (absoluteOffsetMicros <= 100'000.0) {
+      markerColor = QStringLiteral("#10b981");
+    } else if (absoluteOffsetMicros <= 500'000.0) {
+      markerColor = QStringLiteral("#f59e0b");
+    } else if (absoluteOffsetMicros <= 1'000'000.0) {
+      markerColor = QStringLiteral("#991b1b");
+    } else {
+      markerColor = QStringLiteral("#ef4444");
+    }
+    painter.setBrush(QColor(markerColor));
     painter.drawRoundedRect(QRectF(markerX - 2.0, 1.0, 4.0, height() - 2.0),
                             2.0, 2.0);
   }
@@ -122,7 +132,8 @@ ServerCard::ServerCard(const int serverId, QWidget *parent)
   setObjectName(QStringLiteral("ServerCard"));
   setProperty("selected", false);
   setCursor(Qt::PointingHandCursor);
-  setMinimumSize(520, 390);
+  setMinimumWidth(520);
+  setFixedHeight(390);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
   auto *root = new QVBoxLayout(this);

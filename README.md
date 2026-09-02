@@ -29,11 +29,11 @@ kit retains that directory name and is binary-compatible with the Visual Studio
 2026 v145 toolset. Override `CMAKE_PREFIX_PATH` when Qt is installed elsewhere.
 
 ```powershell
-cmake -S . -B cmake-build-windows-debug-vs2026 `
+cmake -S . -B cmake-build-debug-visualstudio-2026 `
   -G "Visual Studio 18 2026" -A x64 -T "v145,host=x64" `
   -DOPTIME_DEPLOY_QT_RUNTIME=ON
-cmake --build cmake-build-windows-debug-vs2026 --config Debug
-ctest --test-dir cmake-build-windows-debug-vs2026 -C Debug --output-on-failure
+cmake --build cmake-build-debug-visualstudio-2026 --config Debug
+ctest --test-dir cmake-build-debug-visualstudio-2026 -C Debug --output-on-failure
 ```
 
 CLion uses its `VisualStudio` toolchain pointed at Visual Studio 2026, bundled

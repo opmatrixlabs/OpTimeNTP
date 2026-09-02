@@ -1,8 +1,11 @@
 <RCC>
   <qresource prefix="/icons">
     <file alias="clock.svg">clock.svg</file>
+    <file alias="edit.svg">edit.svg</file>
     <file alias="minus.svg">minus.svg</file>
     <file alias="optime_ntp.svg">optime_ntp.svg</file>
+    <file alias="pause.svg">pause.svg</file>
+    <file alias="play.svg">play.svg</file>
     <file alias="plus.svg">plus.svg</file>
   </qresource>
 </RCC>
