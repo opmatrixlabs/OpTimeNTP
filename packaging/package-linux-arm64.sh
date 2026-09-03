@@ -130,4 +130,8 @@ LDAI_OUTPUT="$appimage_path" \
   exit 4
 }
 
+archive_path="$build_dir/OpTimeNTP_linux_arm64.tar.gz"
+tar -czf "$archive_path" -C "$build_dir" "OpTimeNTP.AppImage"
+
 echo "Created $appimage_path"
+echo "Created $archive_path"

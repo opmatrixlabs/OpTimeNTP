@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repository_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-build_dir=${1:-"$repository_dir/cmake-build-macos-arm64-release"}
+build_dir=${1:-"$repository_dir/cmake-build-release-salesforce-macbook"}
 [[ "$build_dir" = /* ]] || build_dir="$repository_dir/$build_dir"
 case "$build_dir" in
   "$repository_dir"/cmake-build-*) ;;
@@ -27,4 +27,13 @@ app_path="$package_dir/OpTimeNTP.app"
   exit 3
 }
 
+archive_path="$build_dir/OpTimeNTP_macos_arm64.zip"
+rm -f -- "$archive_path"
+/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$app_path" "$archive_path"
+[[ -f "$archive_path" ]] || {
+  echo "Application archive was not created: $archive_path" >&2
+  exit 4
+}
+
 echo "Created $app_path"
+echo "Created $archive_path"

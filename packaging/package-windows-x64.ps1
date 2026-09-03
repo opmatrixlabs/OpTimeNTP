@@ -135,7 +135,7 @@ Compress-Archive -LiteralPath $stageDir -DestinationPath $archivePath `
 Write-Host "Created $archivePath"
 
 $installerScript = Join-Path $PSScriptRoot "OpTimeNTP.nsi"
-$installerPath = Join-Path $BuildDir "OpTimeNTP_${appVersion}_setup.exe"
+$installerPath = Join-Path $BuildDir "OpTimeNTP_setup.exe"
 & $NsisExecutable /V3 `
     "/DAPP_VERSION=$appVersion" `
     "/DAPP_VERSION_QUAD=$windowsVersion" `
@@ -147,3 +147,11 @@ if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) {
     throw "NSIS did not create the expected installer '$installerPath'."
 }
 Write-Host "Created $installerPath"
+
+$installerArchivePath = Join-Path $BuildDir "OpTimeNTP_win_x64.zip"
+Compress-Archive -LiteralPath $installerPath -DestinationPath $installerArchivePath `
+    -CompressionLevel Optimal -Force
+if (-not (Test-Path -LiteralPath $installerArchivePath -PathType Leaf)) {
+    throw "Installer archive was not created: '$installerArchivePath'."
+}
+Write-Host "Created $installerArchivePath"
