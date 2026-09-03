@@ -6,8 +6,7 @@ standard four-timestamp clock-offset and round-trip-delay calculations. A
 user-confirmed action on each server card can apply a fresh server correction
 to the local machine clock.
 
-The interface is based on the Figma Make **Network Time Protocol App**
-prototype. It retains the prototype's dark instrument-panel presentation,
+The interface is based on an instrument-panel presentation,
 server detail cards, comparison tables, polling controls, timing metrics, and
 status summary while replacing all mock data with asynchronous UDP queries.
 
