@@ -47,7 +47,7 @@ macOS ARM64 Release configurations. Platform archive scripts are documented in
 
 ## Use
 
-The first run configures four servers from the Figma prototype:
+The default four servers are listed below, but you can change them as you see fit:
 
 - `pool.ntp.org`
 - `time.cloudflare.com`
