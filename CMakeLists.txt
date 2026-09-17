@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30...4.3)
 
 project(OpTimeNTP
-        VERSION 0.1.0
+        VERSION 1.0.0
         DESCRIPTION "Cross-platform NTP server comparison desktop application"
         HOMEPAGE_URL "https://github.com/opmatrixsoftware/OpTimeNTP"
         LANGUAGES CXX)
@@ -105,6 +105,7 @@ set(OPTIME_SOURCES
         src/ServerListYaml.cpp
         src/ServerValidation.cpp
         src/SystemTimeSetter.cpp
+        src/TimingStatistics.cpp
 )
 
 set(OPTIME_HEADERS
@@ -118,6 +119,7 @@ set(OPTIME_HEADERS
         src/ServerListYaml.h
         src/ServerValidation.h
         src/SystemTimeSetter.h
+        src/TimingStatistics.h
 )
 
 set(OPTIME_RESOURCES
@@ -266,6 +268,7 @@ if(BUILD_TESTING)
             src/NtpProtocol.cpp
             src/ServerListYaml.cpp
             src/ServerValidation.cpp
+            src/TimingStatistics.cpp
     )
     target_include_directories(OpTimeNTPTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(OpTimeNTPTests PRIVATE

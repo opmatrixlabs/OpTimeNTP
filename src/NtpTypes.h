@@ -54,7 +54,7 @@ struct NtpSample {
   double precisionSeconds = 0.0;
   double pollIntervalSeconds = 0.0;
   double jitterMillis = 0.0;
-  std::optional<double> frequencyPpm;
+  std::optional<double> localDriftMillisPerHour;
   int precisionExponent = 0;
   int pollExponent = 0;
   int leapIndicator = 3;

@@ -38,7 +38,7 @@
 #endif
 
 #ifndef OPTIME_VERSION
-#define OPTIME_VERSION "0.1.0"
+#define OPTIME_VERSION "1.0.0"
 #endif
 
 int main(int argc, char *argv[]) {

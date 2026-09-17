@@ -69,7 +69,7 @@ class ServerCard final : public QFrame {
   OffsetBar *m_offsetBar = nullptr;
   MetricLabels m_roundTrip;
   MetricLabels m_jitter;
-  MetricLabels m_frequency;
+  MetricLabels m_localDrift;
   MetricLabels m_precision;
   MetricLabels m_rootDelay;
   MetricLabels m_rootDispersion;

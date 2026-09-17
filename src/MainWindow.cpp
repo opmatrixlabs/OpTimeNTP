@@ -65,6 +65,7 @@
 #include "ServerCard.h"
 #include "ServerDialog.h"
 #include "ServerListYaml.h"
+#include "TimingStatistics.h"
 
 namespace {
 
@@ -154,13 +155,14 @@ void sizeTableToRows(QTableWidget *table) {
                         table->rowCount() * rowHeight + 3);
 }
 
-QString displayFrequency(const NtpSample &sample) {
-  if (!sample.frequencyPpm.has_value()) {
+QString displayLocalDrift(const NtpSample &sample) {
+  if (!sample.localDriftMillisPerHour.has_value()) {
     return QStringLiteral("Collecting");
   }
-  return QStringLiteral("%1%2 ppm")
-      .arg(*sample.frequencyPpm >= 0.0 ? QStringLiteral("+") : QString())
-      .arg(*sample.frequencyPpm, 0, 'f', 3);
+  return QStringLiteral("%1%2 ms/hr")
+      .arg(*sample.localDriftMillisPerHour >= 0.0 ? QStringLiteral("+")
+                                                  : QString())
+      .arg(*sample.localDriftMillisPerHour, 0, 'f', 3);
 }
 
 }  // namespace
@@ -637,7 +639,7 @@ void MainWindow::setupUi() {
       {QStringLiteral("Server"), QStringLiteral("Precision"),
        QStringLiteral("Root delay"), QStringLiteral("Root dispersion"),
        QStringLiteral("Server poll"), QStringLiteral("Reachability"),
-       QStringLiteral("Reference ID"), QStringLiteral("Frequency estimate")},
+       QStringLiteral("Reference ID"), QStringLiteral("Local drift")},
       200);
   comparisonLayout->addWidget(m_detailTable);
 
@@ -1224,7 +1226,7 @@ void MainWindow::updateComparisonTables() {
     m_detailTable->setItem(
         row, 5, tableItem(FormatUtils::reachability(state.reachability)));
     m_detailTable->setItem(row, 6, tableItem(sample.referenceId));
-    m_detailTable->setItem(row, 7, tableItem(displayFrequency(sample)));
+    m_detailTable->setItem(row, 7, tableItem(displayLocalDrift(sample)));
 
     m_leapTable->setItem(row, 1,
                          tableItem(FormatUtils::leapBits(sample.leapIndicator)));
@@ -1521,41 +1523,11 @@ void MainWindow::handleQueryFailed(const int serverId, const QueryStatus status,
 }
 
 void MainWindow::updateSampleStatistics(ServerState &state, NtpSample &sample) {
-  state.history.append({sample.destinationUnixMicros, sample.offsetMicros});
-  while (state.history.size() > 8) {
-    state.history.removeFirst();
-  }
-
-  if (state.history.size() >= 2) {
-    const auto observationCount = static_cast<double>(state.history.size());
-    const double mean = std::accumulate(
-                            state.history.cbegin(), state.history.cend(), 0.0,
-                            [](const double total,
-                               const OffsetObservation &observation) {
-                              return total + observation.offsetMicros;
-                            }) /
-                        observationCount;
-    const double variance = std::accumulate(
-                                state.history.cbegin(), state.history.cend(), 0.0,
-                                [mean](const double total,
-                                       const OffsetObservation &observation) {
-                                  const double difference =
-                                      observation.offsetMicros - mean;
-                                  return total + difference * difference;
-                                }) /
-                            observationCount;
-    sample.jitterMillis = std::sqrt(variance) / 1000.0;
-
-    const OffsetObservation &first = state.history.front();
-    const OffsetObservation &last = state.history.back();
-    const qint64 elapsedMicros =
-        last.observedAtUnixMicros - first.observedAtUnixMicros;
-    if (elapsedMicros >= 60'000'000) {
-      sample.frequencyPpm =
-          (last.offsetMicros - first.offsetMicros) /
-          static_cast<double>(elapsedMicros) * 1'000'000.0;
-    }
-  }
+  TimingStatistics::appendObservation(
+      state.history, {sample.destinationUnixMicros, sample.offsetMicros});
+  sample.jitterMillis = TimingStatistics::jitterMillis(state.history);
+  sample.localDriftMillisPerHour =
+      TimingStatistics::localDriftMillisPerHour(state.history);
 }
 
 ServerState *MainWindow::findState(const int serverId) {

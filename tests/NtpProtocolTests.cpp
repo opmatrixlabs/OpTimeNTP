@@ -8,6 +8,7 @@
 #include "FormatUtils.h"
 #include "NtpProtocol.h"
 #include "ServerListYaml.h"
+#include "TimingStatistics.h"
 
 namespace {
 
@@ -117,6 +118,64 @@ class NtpProtocolTests final : public QObject {
   static void formatsPreciseOffsetsWithoutUnicodeUnits() {
     QCOMPARE(FormatUtils::preciseOffset(208.0), QStringLiteral("+208.0 us"));
     QCOMPARE(FormatUtils::preciseOffset(-1'860.0), QStringLiteral("-1.860 ms"));
+  }
+
+  static void localDriftRequiresEightSamplesSpanningFiveMinutes() {
+    constexpr qint64 start = 1'700'000'000'000'000LL;
+    QVector<OffsetObservation> history;
+    for (int index = 0; index < 7; ++index) {
+      history.append({start + index * 60'000'000LL,
+                      static_cast<double>(index * 1000)});
+    }
+    QVERIFY(!TimingStatistics::localDriftMillisPerHour(history).has_value());
+
+    history.clear();
+    for (int index = 0; index < 8; ++index) {
+      history.append({start + index * 42'714'285LL,
+                      static_cast<double>(index * 1000)});
+    }
+    QVERIFY(!TimingStatistics::localDriftMillisPerHour(history).has_value());
+
+    history.back().observedAtUnixMicros = start + 5 * 60'000'000LL;
+    QVERIFY(TimingStatistics::localDriftMillisPerHour(history).has_value());
+  }
+
+  static void localDriftUsesLeastSquaresAcrossRollingHistory() {
+    QVector<OffsetObservation> history;
+    constexpr qint64 start = 1'700'000'000'000'000LL;
+    constexpr double expectedDriftMillisPerHour = 36.0;
+    for (int index = 0; index <= 30; ++index) {
+      const qint64 elapsedMicros = index * 60'000'000LL;
+      const double elapsedHours =
+          static_cast<double>(elapsedMicros) / 3'600'000'000.0;
+      const double noiseMicros = index % 2 == 0 ? 250.0 : -250.0;
+      TimingStatistics::appendObservation(
+          history,
+          {start + elapsedMicros,
+           5000.0 + expectedDriftMillisPerHour * elapsedHours * 1000.0 +
+               noiseMicros});
+    }
+
+    const std::optional<double> drift =
+        TimingStatistics::localDriftMillisPerHour(history);
+    QVERIFY(drift.has_value());
+    QVERIFY(std::abs(*drift - expectedDriftMillisPerHour) < 0.1);
+    QCOMPARE(history.size(), 31);
+
+    TimingStatistics::appendObservation(
+        history, {start + 31 * 60'000'000LL, 36'000.0});
+    QCOMPARE(history.front().observedAtUnixMicros,
+             start + 60'000'000LL);
+    QCOMPARE(history.size(), 31);
+  }
+
+  static void jitterUsesOnlyTheMostRecentEightSamples() {
+    QVector<OffsetObservation> history = {{0, 1'000'000.0}};
+    for (int index = 1; index <= 8; ++index) {
+      history.append({index, 0.0});
+    }
+
+    QCOMPARE(TimingStatistics::jitterMillis(history), 0.0);
   }
 
   static void yamlServerListRoundTrips() {

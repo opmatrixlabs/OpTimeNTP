@@ -222,15 +222,15 @@ ServerCard::ServerCard(const int serverId, QWidget *parent)
   };
 
   addMetricRow({QStringLiteral("ROUND-TRIP"), QStringLiteral("JITTER"),
-                QStringLiteral("FREQUENCY")},
-               {&m_roundTrip, &m_jitter, &m_frequency});
+                QStringLiteral("LOCAL DRIFT")},
+               {&m_roundTrip, &m_jitter, &m_localDrift});
   addMetricRow({QStringLiteral("PRECISION"), QStringLiteral("ROOT DELAY"),
                 QStringLiteral("ROOT DISPERSION")},
                {&m_precision, &m_rootDelay, &m_rootDispersion});
   addMetricRow({QStringLiteral("LEAP INDICATOR"), QStringLiteral("REFERENCE ID"),
                 QStringLiteral("STRATUM")},
                {&m_leap, &m_referenceId, &m_stratum});
-  addMetricRow({QStringLiteral("POLL INTERVAL"), QStringLiteral("REACHABILITY"),
+  addMetricRow({QStringLiteral("REQUESTED POLL INTERVAL"), QStringLiteral("REACHABILITY"),
                 QStringLiteral("LAST UPDATED")},
                {&m_pollInterval, &m_reachability, &m_lastUpdated});
 }
@@ -258,7 +258,7 @@ void ServerCard::setState(const ServerState &state,
     m_offsetBar->setOffset(0.0);
     setMetric(m_roundTrip, QStringLiteral("--"));
     setMetric(m_jitter, QStringLiteral("--"));
-    setMetric(m_frequency, QStringLiteral("--"));
+    setMetric(m_localDrift, QStringLiteral("--"));
     setMetric(m_precision, QStringLiteral("--"));
     setMetric(m_rootDelay, QStringLiteral("--"));
     setMetric(m_rootDispersion, QStringLiteral("--"));
@@ -287,12 +287,13 @@ void ServerCard::setState(const ServerState &state,
                 ? QStringLiteral("Collecting")
                 : QStringLiteral("%1 ms").arg(sample.jitterMillis, 0, 'f', 3),
             {}, sample.jitterMillis > 1.0 ? warning : QString());
-  setMetric(m_frequency,
-            sample.frequencyPpm.has_value()
-                ? QStringLiteral("%1%2 ppm")
-                      .arg(*sample.frequencyPpm >= 0.0 ? QStringLiteral("+")
-                                                       : QString())
-                      .arg(*sample.frequencyPpm, 0, 'f', 3)
+  setMetric(m_localDrift,
+            sample.localDriftMillisPerHour.has_value()
+                ? QStringLiteral("%1%2 ms/hr")
+                      .arg(*sample.localDriftMillisPerHour >= 0.0
+                               ? QStringLiteral("+")
+                               : QString())
+                      .arg(*sample.localDriftMillisPerHour, 0, 'f', 3)
                 : QStringLiteral("Collecting"));
   setMetric(m_precision,
             QStringLiteral("2^%1").arg(sample.precisionExponent),
@@ -318,8 +319,7 @@ void ServerCard::setState(const ServerState &state,
                                 : QStringLiteral("#94a3b8");
   setMetric(m_stratum, QString::number(sample.stratum), {}, stratumColor);
   setMetric(m_pollInterval,
-            QStringLiteral("%1 s").arg(sample.pollIntervalSeconds, 0, 'f', 0),
-            QStringLiteral("Server preference"));
+            QStringLiteral("%1 s").arg(sample.pollIntervalSeconds, 0, 'f', 0));
   setMetric(m_lastUpdated, elapsedText(sample.destinationUnixMicros));
 }
 

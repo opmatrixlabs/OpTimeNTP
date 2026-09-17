@@ -96,9 +96,10 @@ block outbound NTP traffic.
 
 The prominent offset is always rendered as signed hundredths of a second, as
 required, while an adjacent value retains microsecond or millisecond detail.
-Jitter and frequency drift are estimates based on the most recent eight
-successful samples. Frequency drift displays **Collecting** until those samples
-span at least one minute.
+Jitter is estimated from the most recent eight successful samples. Local drift
+uses least-squares regression over a rolling 30-minute sample history and is
+displayed in milliseconds per hour (`ms/hr`). It shows **Collecting** until at
+least eight successful samples span five minutes.
 
 ## Licensing
 
