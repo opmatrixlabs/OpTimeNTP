@@ -61,6 +61,7 @@
 #include <numeric>
 #include <utility>
 
+#include "AboutDialog.h"
 #include "FormatUtils.h"
 #include "ServerCard.h"
 #include "ServerDialog.h"
@@ -750,17 +751,8 @@ void MainWindow::setupMenus() {
   QMenu *helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
   QAction *aboutAction = helpMenu->addAction(QStringLiteral("&About OpTime NTP"));
   connect(aboutAction, &QAction::triggered, this, [this] {
-    QMessageBox::about(
-        this, QStringLiteral("About OpTime NTP"),
-        QStringLiteral("<b>OpTime NTP %1</b><br><br>"
-                       "Compares the local computer clock with up to ten NTPv4 "
-                       "servers using the four-timestamp offset calculation.<br>"
-                       "<br>Copyright (C) 2026 Andrew Kevin Bailey<br><br>"
-                       "Built with C++20 and Qt 6.10.3. Application source is MIT "
-                       "licensed. NTP client design incorporates ideas from the "
-                       "MIT-licensed elrinor/qntp project. YAML support uses the "
-                       "MIT-licensed yaml-cpp library.")
-            .arg(QCoreApplication::applicationVersion()));
+    AboutDialog dialog(this);
+    dialog.exec();
   });
 }
 

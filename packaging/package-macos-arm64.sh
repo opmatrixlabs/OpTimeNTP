@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repository_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-build_dir=${1:-"$repository_dir/cmake-build-release-salesforce-macbook"}
+build_dir=${1:-"$repository_dir/cmake-build-release-wks-mac6"}
 [[ "$build_dir" = /* ]] || build_dir="$repository_dir/$build_dir"
 case "$build_dir" in
   "$repository_dir"/cmake-build-*) ;;

@@ -12,7 +12,7 @@
     <p>OpTime NTP queries multiple NTP servers and compares their synchronized time with the local computer clock.</p>
   </description>
   <launchable type="desktop-id">io.github.opmatrixsoftware.optimentp.desktop</launchable>
-  <url type="homepage">https://github.com/opmatrixsoftware</url>
+  <url type="homepage">@PROJECT_HOMEPAGE_URL@</url>
   <provides>
     <binary>OpTimeNTP</binary>
   </provides>

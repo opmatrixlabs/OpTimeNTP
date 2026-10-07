@@ -18,8 +18,15 @@ script creates `cmake-build-release-wsl-linux-x86_64/OpTimeNTP.AppImage` and
 locations with `OPTIME_QT_DIR`, `LINUXDEPLOY_EXECUTABLE`,
 `LINUXDEPLOY_QT_PLUGIN`, or `LINUXDEPLOY_QMAKE` when needed.
 
+Both Linux scripts validate the installed AppStream metadata with
+`appstreamcli validate --no-net` when `appstreamcli` is available, then set
+`LDAI_NO_APPSTREAM=1` to skip appimagetool's duplicate online validation. This
+keeps packaging independent of homepage availability while retaining local
+metadata validation. The metadata homepage comes from CMake's
+`PROJECT_HOMEPAGE_URL`.
+
 The macOS script uses `macdeployqt` and creates the self-contained bundle at
-`cmake-build-release-salesforce-macbook/package/OpTimeNTP.app`, then archives it
+`../cmake-build-release-wks-mac6`, then archives it
 as `OpTimeNTP_macos_arm64.zip` with `ditto`. The application icon, license, and
 third-party notices are embedded in the bundle's `Resources` directory. Code
 signing and notarization are not performed.

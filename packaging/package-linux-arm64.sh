@@ -108,6 +108,13 @@ for qt_runtime_library in libQt6WaylandClient.so.6 libQt6OpenGL.so.6; do
   cp -L -- "$source_library" "$app_dir/usr/lib/$qt_runtime_library"
 done
 
+# Validate installed metadata offline; appimagetool's online URL checks can
+# reject private/unpublished homepages or fail when the network is unavailable.
+if command -v appstreamcli >/dev/null 2>&1; then
+  appstreamcli validate --no-net \
+    "$app_dir/usr/share/metainfo/io.github.opmatrixsoftware.optimentp.appdata.xml"
+fi
+
 PATH="$build_dir:$qt_dir/bin:$PATH" \
 LD_LIBRARY_PATH="$qt_dir/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
 LINUXDEPLOY_REAL_QMAKE="$qmake" \
@@ -115,6 +122,7 @@ LINUXDEPLOY_FILTERED_QT_PLUGINS="$plugin_filter_dir" \
 QMAKE="$qmake_wrapper" \
 ARCH=aarch64 \
 LDAI_OUTPUT="$appimage_path" \
+LDAI_NO_APPSTREAM=1 \
 "$linuxdeploy" \
   --appdir "$app_dir" \
   --executable "$app_dir/usr/bin/OpTimeNTP" \

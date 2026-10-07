@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30...4.3)
 
 project(OpTimeNTP
-        VERSION 1.0.0
+        VERSION 1.1.0
         DESCRIPTION "Cross-platform NTP server comparison desktop application"
         HOMEPAGE_URL "https://github.com/opmatrixsoftware/OpTimeNTP"
         LANGUAGES CXX)
@@ -50,7 +50,7 @@ elseif(APPLE)
     endif()
     message(STATUS "Configuring OpTimeNTP for macOS ARM64")
     if(NOT DEFINED CMAKE_PREFIX_PATH)
-        set(CMAKE_PREFIX_PATH "/Library/Qt/6.10.3/macos")
+        set(CMAKE_PREFIX_PATH "/Users/akbailey/Qt/6.10.3/macos")
     endif()
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
@@ -96,6 +96,7 @@ endif()
 
 set(OPTIME_SOURCES
         src/main.cpp
+        src/AboutDialog.cpp
         src/FormatUtils.cpp
         src/MainWindow.cpp
         src/NtpClient.cpp
@@ -109,6 +110,7 @@ set(OPTIME_SOURCES
 )
 
 set(OPTIME_HEADERS
+        src/AboutDialog.h
         src/FormatUtils.h
         src/MainWindow.h
         src/NtpClient.h
@@ -153,11 +155,27 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE Shell32)
 endif()
 
+set(OPTIME_TARGET_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+if(CMAKE_VS_PLATFORM_NAME)
+    set(OPTIME_TARGET_PROCESSOR "${CMAKE_VS_PLATFORM_NAME}")
+elseif(APPLE AND CMAKE_OSX_ARCHITECTURES)
+    string(REPLACE ";" ", " OPTIME_TARGET_PROCESSOR "${CMAKE_OSX_ARCHITECTURES}")
+endif()
+set(OPTIME_COMPILED_FOR "${CMAKE_SYSTEM_NAME} ${OPTIME_TARGET_PROCESSOR}")
+set(OPTIME_COMPILED_ON "${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+set(OPTIME_COMPILED_WITH "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+string(TIMESTAMP OPTIME_BUILD_DATE "%Y-%m-%d")
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         "OPTIME_DISPLAY_NAME=\"${OPTIME_DISPLAY_NAME}\""
         "OPTIME_ORGANIZATION_NAME=\"${OPTIME_ORGANIZATION_NAME}\""
         "OPTIME_APP_ID=\"${OPTIME_APP_ID}\""
         "OPTIME_VERSION=\"${PROJECT_VERSION}\""
+        "OPTIME_HOMEPAGE_URL=\"${PROJECT_HOMEPAGE_URL}\""
+        "OPTIME_COMPILED_FOR=\"${OPTIME_COMPILED_FOR}\""
+        "OPTIME_COMPILED_ON=\"${OPTIME_COMPILED_ON}\""
+        "OPTIME_BUILD_DATE=\"${OPTIME_BUILD_DATE}\""
+        "OPTIME_COMPILED_WITH=\"${OPTIME_COMPILED_WITH}\""
 )
 
 if(MSVC)
@@ -213,7 +231,7 @@ if(OPTIME_DEPLOY_QT_RUNTIME AND WIN32)
     endif()
 elseif(OPTIME_DEPLOY_QT_RUNTIME AND APPLE)
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt
-            HINTS "/Library/Qt/6.10.3/macos/bin")
+            HINTS "/Users/akbailey/Qt/6.10.3/macos/bin")
     if(MACDEPLOYQT_EXECUTABLE)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND "${MACDEPLOYQT_EXECUTABLE}" "$<TARGET_BUNDLE_DIR:${PROJECT_NAME}>" -verbose=1
@@ -229,7 +247,6 @@ install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    string(TIMESTAMP OPTIME_BUILD_DATE "%Y-%m-%d")
     configure_file(
             resources/io.github.opmatrixsoftware.optimentp.metainfo.xml.in
             "${CMAKE_CURRENT_BINARY_DIR}/${OPTIME_APP_ID}.metainfo.xml"
