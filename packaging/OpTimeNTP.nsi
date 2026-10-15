@@ -22,7 +22,7 @@ Unicode true
 !define PRODUCT_NAME "OpTime NTP"
 !define PRODUCT_EXE "OpTimeNTP.exe"
 !define PRODUCT_PUBLISHER "OpMatrix Inc."
-!define PRODUCT_WEB_SITE "https://github.com/opmatrixsoftware/OpTimeNTP"
+!define PRODUCT_WEB_SITE "https://github.com/opmatrixlabs/OpTimeNTP"
 !define PRODUCT_UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpTimeNTP"
 
 Name "${PRODUCT_NAME}"

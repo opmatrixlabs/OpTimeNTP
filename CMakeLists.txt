@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.30...4.3)
 
 project(OpTimeNTP
-        VERSION 1.1.0
+        VERSION 1.1.2
         DESCRIPTION "Cross-platform NTP server comparison desktop application"
-        HOMEPAGE_URL "https://github.com/opmatrixsoftware/OpTimeNTP"
+        HOMEPAGE_URL "https://github.com/opmatrixlabs/OpTimeNTP"
         LANGUAGES CXX)
 
 set(OPTIME_DISPLAY_NAME "OpTime NTP")
 set(OPTIME_ORGANIZATION_NAME "OpMatrix Inc.")
-set(OPTIME_APP_ID "io.github.opmatrixsoftware.optimentp")
+set(OPTIME_APP_ID "io.github.opmatrixlabs.optimentp")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -248,11 +248,11 @@ install(TARGETS ${PROJECT_NAME}
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     configure_file(
-            resources/io.github.opmatrixsoftware.optimentp.metainfo.xml.in
+            resources/io.github.opmatrixlabs.optimentp.metainfo.xml.in
             "${CMAKE_CURRENT_BINARY_DIR}/${OPTIME_APP_ID}.metainfo.xml"
             @ONLY)
 
-    install(FILES resources/io.github.opmatrixsoftware.optimentp.desktop
+    install(FILES resources/io.github.opmatrixlabs.optimentp.desktop
             DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
     install(FILES resources/optime_ntp.svg
             DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps

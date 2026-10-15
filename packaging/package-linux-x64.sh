@@ -102,7 +102,7 @@ done
 # reject private/unpublished homepages or fail when the network is unavailable.
 if command -v appstreamcli >/dev/null 2>&1; then
   appstreamcli validate --no-net \
-    "$app_dir/usr/share/metainfo/io.github.opmatrixsoftware.optimentp.appdata.xml"
+    "$app_dir/usr/share/metainfo/io.github.opmatrixlabs.optimentp.appdata.xml"
 fi
 
 PATH="$build_dir:$qt_dir/bin:$PATH" \
@@ -116,8 +116,8 @@ LDAI_NO_APPSTREAM=1 \
 "$linuxdeploy" \
   --appdir "$app_dir" \
   --executable "$app_dir/usr/bin/OpTimeNTP" \
-  --desktop-file "$app_dir/usr/share/applications/io.github.opmatrixsoftware.optimentp.desktop" \
-  --icon-file "$app_dir/usr/share/icons/hicolor/scalable/apps/io.github.opmatrixsoftware.optimentp.svg" \
+  --desktop-file "$app_dir/usr/share/applications/io.github.opmatrixlabs.optimentp.desktop" \
+  --icon-file "$app_dir/usr/share/icons/hicolor/scalable/apps/io.github.opmatrixlabs.optimentp.svg" \
   --exclude-library 'libglib-2.0.so*' \
   --exclude-library 'libgthread-2.0.so*' \
   --plugin qt \
